@@ -1,0 +1,53 @@
+(ns animate-transition.main
+  "Faithful port of https://docs.flutter.dev/cookbook/animation/page-route-animation"
+  ;; pure dart package are imported using string
+  (:require ["package:flutter/material.dart" :as m]
+            ["package:flutter/widgets.dart" :as w]
+            ["package:flutter/animation.dart" :as animation]
+            ["dart:ui" :as ui]
+            ["dart:core" :as core]
+            [cljd.flutter.alpha :as f]))
+
+(def page2
+  (f/widget
+   :context cxt
+   (m/Scaffold
+    :appBar (m/AppBar)
+    :body (w/Center
+           :child (w/Text "Page 2")))))
+
+(defn create-route []
+  (#/(w/PageRouteBuilder Object)
+   :pageBuilder (fn [& _] page2)
+   :transitionsBuilder (fn [context animation secondaryAnimation child]
+                         (let [begin (ui/Offset 0.0 1.0)
+                               end ui.Offset/zero
+                               curve animation.Curves/ease
+                               tween (.chain (animation/Tween
+                                              :begin begin
+                                              :end end)
+                                             (animation/CurveTween
+                                              :curve curve))]
+                           (w/SlideTransition
+                            :position (. animation drive tween)
+                            :child child)))))
+
+(def page1
+  (f/widget
+   :inherit [m/Navigator]
+   :context ctx
+   (m/Scaffold
+    :appBar (m/AppBar)
+    :body (f/nest
+           w/Center
+           (m/ElevatedButton
+            :onPressed #(do
+                          (.push (.of m/Navigator ctx) (create-route))
+                          nil))
+           (w/Text "Go!")))))
+
+(defn main []
+  (m/runApp
+   (m/MaterialApp
+    :title "Animage a page route transition"
+    :home page1)))
